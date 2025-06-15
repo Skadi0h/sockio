@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    container_name: sockio_app
+    environment:
+      - UV_COMPILE_BYTECODE=1
+      - UV_LINK_MODE=copy
+    ports:
+      - '80:80'
+    volumes:
+      - ./sockio/:/app/sockio/

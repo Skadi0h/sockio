@@ -1,0 +1,9 @@
+[project]
+name = "sockio"
+version = "0.1.0"
+description = "Fast messanger"
+readme = "README.md"
+requires-python = ">=3.13.5"
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+]
