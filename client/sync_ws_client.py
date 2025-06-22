@@ -16,16 +16,13 @@ def writer(ws) -> None:
 
 
 def main():
-    uri = "wss://b451-87-228-161-218.ngrok-free.app"
+    uri = "<YOUR URI>"
     
     with connect(uri) as websocket:
         thread_listener = Thread(target=listener, args=(websocket,))
         thread_listener.start()
         
-        thread_writer = Thread(target=writer, args=(websocket,))
-        thread_writer.start()
-        
-        sleep(999999)
+        writer(websocket)
 
 
 main()
