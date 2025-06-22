@@ -5,5 +5,12 @@ description = "Fast messanger"
 readme = "README.md"
 requires-python = ">=3.13.5"
 dependencies = [
-    "fastapi[standard]>=0.115.12",
+    "socketify>=0.0.31",
+    "watchfiles>=1.1.0",
+]
+
+
+[tool.uv]
+dev-dependencies = [
+    "websockets>=15.0.1"
 ]
