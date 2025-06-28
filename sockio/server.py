@@ -1,6 +1,5 @@
 from socketify import (
     App,
-    OpCode,
     CompressOptions,
     WebSocket,
 )
@@ -10,22 +9,25 @@ from sockio.log import make_logger
 logger = make_logger('main')
 
 clients = {}
+ROOM_NAME = 'room'
 
 
-def ws_open(ws: WebSocket):
+def on_connect(ws: WebSocket):
     logger.debug("A WebSocket got connected!")
-    ws.subscribe('room')
+    ws.subscribe(ROOM_NAME)
     return 1
 
 
-def ws_message(ws: WebSocket, message: bytes, opcode):
-    logger.debug(f'Received message: {message}')
+def answer_greeting(ws: WebSocket, message: bytes) -> None:
     if message.startswith(b'name:'):
         new_client_name = message.split(b':')[1].decode()
-        clients[ws.get_remote_address()] = new_client_name
         ws.send(f'Server: Hello, {new_client_name}!'.encode())
-    else:
-        ws.publish('room', message=f'{clients[ws.get_remote_address()]}: {message.decode()}'.encode())
+
+
+def on_message(ws: WebSocket, message: bytes, _: int):
+    logger.debug(f'Received message: {message}')
+    answer_greeting(message=message, ws=ws)
+    ws.publish(ROOM_NAME, message=message)
     return 1
 
 
@@ -35,10 +37,10 @@ def main() -> None:
         "/*",
         {
             "compression": CompressOptions.SHARED_COMPRESSOR,
-            "max_payload_length": 16 * 1024 * 1024,
+            "max_payload_length": 1024 * 1024 * 1024,
             "idle_timeout": 900,
-            "open": ws_open,
-            "message": ws_message,
+            "open": on_connect,
+            "message": on_message,
             "drain": lambda ws: print(
                 "WebSocket backpressure: %s", ws.get_buffered_amount()
             ),
