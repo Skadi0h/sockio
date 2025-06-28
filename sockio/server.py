@@ -1,26 +1,33 @@
 from socketify import (
     App,
     OpCode,
-    CompressOptions
+    CompressOptions,
+    WebSocket,
 )
 
 from sockio.log import make_logger
 
 logger = make_logger('main')
 
+clients = {}
 
-def ws_open(ws):
+
+def ws_open(ws: WebSocket):
     logger.debug("A WebSocket got connected!")
     ws.subscribe('room')
-    ws.send('Vanya Connected')
     return 1
 
 
-def ws_message(ws, message, opcode):
+def ws_message(ws: WebSocket, message: bytes, opcode):
     logger.debug(f'Received message: {message}')
-    # Ok is false if backpressure was built up, wait for drain
-    ws.publish('room', message=message)
+    if message.startswith(b'name:'):
+        new_client_name = message.split(b':')[1].decode()
+        clients[ws.get_remote_address()] = new_client_name
+        ws.send(f'Server: Hello, {new_client_name}!'.encode())
+    else:
+        ws.publish('room', message=f'{clients[ws.get_remote_address()]}: {message.decode()}'.encode())
     return 1
+
 
 def main() -> None:
     app = App()
@@ -29,7 +36,7 @@ def main() -> None:
         {
             "compression": CompressOptions.SHARED_COMPRESSOR,
             "max_payload_length": 16 * 1024 * 1024,
-            "idle_timeout": 300,
+            "idle_timeout": 900,
             "open": ws_open,
             "message": ws_message,
             "drain": lambda ws: print(
@@ -44,3 +51,6 @@ def main() -> None:
         lambda config: logger.debug("Listening on port http://localhost:%d now\n" % (config.port)),
     )
     app.run()
+
+
+main()

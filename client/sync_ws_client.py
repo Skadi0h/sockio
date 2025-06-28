@@ -1,25 +1,27 @@
 from websockets.sync.client import connect
 from threading import Thread
-from time import sleep
 
 
-def listener(ws) -> None:
+def listener(ws, my_name) -> None:
     while True:
-        sleep(0.01)
-        print("\nReceived from server:", ws.recv())
+        recv_message = ws.recv().decode()
+        if not recv_message.startswith(f'{my_name}:'):
+            print(recv_message)
 
 
 def writer(ws) -> None:
-    sleep(1)
     while True:
-        ws.send(input('Enter msg:'))
+        msg = input()
+        ws.send(msg.encode())
 
 
 def main():
-    uri = "<YOUR URI>"
+    uri = "wss://3317-93-109-70-44.ngrok-free.app"
     
     with connect(uri) as websocket:
-        thread_listener = Thread(target=listener, args=(websocket,))
+        name = input("Enter your name: ")
+        websocket.send(f"name:{name}".encode())
+        thread_listener = Thread(target=listener, args=(websocket, name), daemon=True)
         thread_listener.start()
         
         writer(websocket)
