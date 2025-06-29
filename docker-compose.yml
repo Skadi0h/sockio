@@ -6,9 +6,7 @@ services:
       - UV_COMPILE_BYTECODE=1
       - UV_LINK_MODE=copy
     ports:
-      - '3000:3000'
+      - '80:3000'
     volumes:
       - ./sockio/:/app/sockio/
-    command: [ "uv", "run", "watchfiles","sockio.server.main" ]
-
-    
+    command: [ "uv", "run", "watchfiles","sockio.main.main" ]

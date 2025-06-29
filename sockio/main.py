@@ -18,15 +18,8 @@ def on_connect(ws: WebSocket):
     return 1
 
 
-def answer_greeting(ws: WebSocket, message: bytes) -> None:
-    if message.startswith(b'name:'):
-        new_client_name = message.split(b':')[1].decode()
-        ws.send(f'Server: Hello, {new_client_name}!'.encode())
-
-
 def on_message(ws: WebSocket, message: bytes, _: int):
     logger.debug(f'Received message: {message}')
-    answer_greeting(message=message, ws=ws)
     ws.publish(ROOM_NAME, message=message)
     return 1
 
