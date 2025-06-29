@@ -24,7 +24,7 @@ jobs:
             pyproject.toml \
             docker-compose.yml \
             Dockerfile \
-            sockio/ \
+            sockio \
             root@${{ secrets.VPS_HOST }}:/opt/sockio/
 
       - name: Run docker compose on VPS
