@@ -5,4 +5,4 @@ WORKDIR /app
 COPY uv.lock pyproject.toml ./
 RUN apt-get update && apt install -y libuv1-dev libssl-dev \
     && rm -rf /var/lib/apt/lists/* \
-    && uv sync --frozen --no-cache --production
+    && uv sync --frozen --no-cache
