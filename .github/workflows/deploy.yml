@@ -20,6 +20,8 @@ jobs:
       - name: Copy files to VPS
         run: |
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+            uv.lock \
+            pyproject.toml \
             docker-compose.yml \
             Dockerfile \
             sockio/ \
