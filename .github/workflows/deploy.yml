@@ -19,7 +19,11 @@ jobs:
 
       - name: Copy files to VPS
         run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ root@${{ secrets.VPS_HOST }}:/opt/sockio/
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+            docker-compose.yml \
+            Dockerfile \
+            sockio/ \
+            root@${{ secrets.VPS_HOST }}:/opt/sockio/
 
       - name: Run docker compose on VPS
         run: |
