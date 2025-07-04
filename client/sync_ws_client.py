@@ -38,7 +38,7 @@ def listener(client_conn: ClientConnection) -> None:
 
         elif recv_message.startswith(f'image_list{SPLITTER_STR}'.encode()):
             logger.info(IMAGES_TO_SAVE)
-            parts = recv_message.split(SPLITTER)
+            parts = recv_message.split(SPLITTER) #1
 
 
 
