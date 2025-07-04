@@ -26,7 +26,10 @@ def format_batch_message(image_name: str, batch_number: int) -> bytes:
 def format_end_message(image_name: str) -> bytes:
     return f"end_image{SPLITTER_STR}{image_name}".encode()
 
-
+# recv_message = "image_list:::<data>
+# parts = recv_message.split(b':::')
+# >> parts[0] == 'image_list'
+# >> parts[1] == '<payload>'
 def listener(client_conn: ClientConnection) -> None:
     while True:
         recv_message: bytes = client_conn.recv()
@@ -37,9 +40,31 @@ def listener(client_conn: ClientConnection) -> None:
             IMAGES_TO_SAVE[image_name] = []
 
         elif recv_message.startswith(f'image_list{SPLITTER_STR}'.encode()):
-            logger.info(IMAGES_TO_SAVE)
+            # logger.info(IMAGES_TO_SAVE)
             parts = recv_message.split(SPLITTER) #1
-
+            logger.info(msg=f'My parts: {parts}')
+            if len(parts) == 2:
+                
+                bytes_data = b'{s}'.join(IMAGES_TO_SAVE.keys())
+                str_data = bytes_data.decode()
+                formatted_str_data = str_data.format(
+                    s=SPLITTER_STR
+                )
+                encoded_formatted_data = formatted_str_data.encode()
+                # IMAGES_TO_SAVE = {b'sample.jpg': ..., b'sample2.jpg: ...}
+                # data = b'sample.jpg{SPLITTER}sample2.jpg{SPLITTER}'
+                # >> data = 'sample.jpg{s}sample2.jpg{s}'
+                # >> data = 'sample.jpg:::sample2.jpg:::'
+                client_conn.send(
+                    f'image_list{SPLITTER_STR}'.encode() + encoded_formatted_data
+                )
+                # >> whole_message = 'image_list:::sample.jpg:::sample2.jpg:::'
+                
+            elif len(parts) > 2:
+                image_list = parts[1:]   # list[bytes]
+                # >>> sample.jpg:::sample2.jpg:::
+                logger.info(f'Received image list: {image_list}')
+                
 
 
         elif recv_message.startswith(f'batch_image{SPLITTER_STR}'.encode()):
