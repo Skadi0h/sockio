@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 URI = "ws://orro.chat"
 IMAGE_COMMAND = '/send_image'
+LIST_OF_IMAGES_COMMAND = '/list_images'
 BATCH_SIZE = 4096
 SPLITTER = b':::'
 SPLITTER_STR = SPLITTER.decode()
@@ -29,23 +30,29 @@ def format_end_message(image_name: str) -> bytes:
 def listener(client_conn: ClientConnection) -> None:
     while True:
         recv_message: bytes = client_conn.recv()
-        
+
         if recv_message.startswith(f'start_image{SPLITTER_STR}'.encode()):
             parts = recv_message.split(SPLITTER, 1)
             image_name = parts[1]
             IMAGES_TO_SAVE[image_name] = []
-        
+
+        elif recv_message.startswith(f'image_list{SPLITTER_STR}'.encode()):
+            logger.info(IMAGES_TO_SAVE)
+            parts = recv_message.split(SPLITTER)
+
+
+
         elif recv_message.startswith(f'batch_image{SPLITTER_STR}'.encode()):
             parts = recv_message.split(SPLITTER, 3)
             if len(parts) < 4:
                 logger.error(f"Malformed batch_image message: {recv_message}")
                 continue
-            
+
             name = parts[1]
             batch_number = int(parts[2])
             data = parts[3]
             IMAGES_TO_SAVE[name].insert(batch_number, data)
-        
+
         elif recv_message.startswith(f'end_image{SPLITTER_STR}'.encode()):
             parts = recv_message.split(SPLITTER, 1)
             name = parts[1]
@@ -53,7 +60,7 @@ def listener(client_conn: ClientConnection) -> None:
             file_name = 'copy_' + name.decode(errors='replace')
             write_image(name=file_name, data=image_data)
             logger.info(f"Image '{file_name}' received and saved.")
-        
+
         else:
             logger.info(f'RECV message: {recv_message}')
 
@@ -64,15 +71,17 @@ def start_writer(client_conn: ClientConnection) -> None:
         if msg.startswith(IMAGE_COMMAND):
             name_of_file: str = msg.split(' ', 1)[-1]
             my_image_data: Iterator[bytes] = read_image(name_of_file)
-            
+
             client_conn.send(format_start_message(name_of_file))
-            
+
             for i, batch in enumerate(my_image_data):
                 header = format_batch_message(name_of_file, i)
                 client_conn.send(header + batch)
-            
+
             client_conn.send(format_end_message(name_of_file))
-        
+        elif msg.startswith(LIST_OF_IMAGES_COMMAND):
+            client_conn.send(f'image_list{SPLITTER_STR}'.encode())
+
         else:
             client_conn.send(msg.encode())
 
