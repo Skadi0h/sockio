@@ -5,6 +5,8 @@ description = "Fast messanger"
 readme = "README.md"
 requires-python = ">=3.13.5"
 dependencies = [
+    "beanie>=1.30.0",
+    "pydantic-settings>=2.10.1",
     "socketify>=0.0.31",
     "watchfiles>=1.1.0",
 ]

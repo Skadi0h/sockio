@@ -1,10 +1,12 @@
 import logging
 
+from sockio.config import config
+
 
 def make_logger(
     name: str,
-    level: int = logging.DEBUG
 ) -> logging.Logger:
+    level = getattr(logging, config.log_level.upper())
     logger = logging.getLogger(f'[sockio] {name}')
     logger.setLevel(level)
     logger.handlers.clear()
