@@ -62,7 +62,21 @@ my_iterator = one_ten_iterator()
 
 
 # Сделать свой range(...)
-def my_range(start: int, end: int) -> int:
+def my_range(start: int, end: int, step: int = 1) -> int:
     counter = start
-    ...
+    while counter < end and  counter % 2 != 0 :
+        yield counter
+        counter += step
 
+print(list(my_range(5, 15)))
+
+def my_letter_generator(word: str) -> str:
+    for letter in word:
+        yield letter
+
+# сделать генератор который будет поочередно отдавать отрицательное и положительное число
+def plus_minus_calculator(number: int) -> int:
+   counter = number
+    while True:
+        yield counter
+        counter *= -1

@@ -43,8 +43,8 @@ def listener(client_conn: ClientConnection) -> None:
             # logger.info(IMAGES_TO_SAVE)
             parts = recv_message.split(SPLITTER) #1
             logger.info(msg=f'My parts: {parts}')
-            if len(parts) == 2:
-                
+            if  not parts[1]:
+
                 bytes_data = b'{s}'.join(IMAGES_TO_SAVE.keys())
                 str_data = bytes_data.decode()
                 formatted_str_data = str_data.format(
@@ -59,8 +59,8 @@ def listener(client_conn: ClientConnection) -> None:
                     f'image_list{SPLITTER_STR}'.encode() + encoded_formatted_data
                 )
                 # >> whole_message = 'image_list:::sample.jpg:::sample2.jpg:::'
-                
-            elif len(parts) > 2:
+
+            else:
                 image_list = parts[1:]   # list[bytes]
                 # >>> sample.jpg:::sample2.jpg:::
                 logger.info(f'Received image list: {image_list}')
