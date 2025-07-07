@@ -75,8 +75,25 @@ def my_letter_generator(word: str) -> str:
         yield letter
 
 # сделать генератор который будет поочередно отдавать отрицательное и положительное число
+import tkinter as tk
+
 def plus_minus_calculator(number: int) -> int:
    counter = number
-    while True:
+   while True:
         yield counter
         counter *= -1
+generator = plus_minus_calculator(1)
+root = tk.Tk()
+root.title("Лампочка")
+canvas = tk.Canvas(root, width=200, height=200, bg="white")
+canvas.pack()
+lamp = canvas.create_oval(50, 50, 150, 150, fill="grey")
+def update_lamp():
+    value = next(generator)
+    if value > 0:
+        canvas.itemconfig(lamp, fill="yellow")
+    else:
+        canvas.itemconfig(lamp, fill="grey")
+    root.after(500, update_lamp)
+update_lamp()
+root.mainloop()
