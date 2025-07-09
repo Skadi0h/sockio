@@ -115,7 +115,7 @@ class SocketifyAPI:
     
     async def _handle_login(self, res, req):
         try:
-            body = await req.get_json()
+            body = await res.get_json()
             
             request = UserLoginRequest(**body)
             response = await auth_manager.login_user(request)
