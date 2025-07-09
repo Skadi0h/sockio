@@ -279,7 +279,8 @@ class UserSession(Document):
         return str(uuid.uuid4())
     
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) > self.expires_at
+        # todo: make aware utc
+        return datetime.now() > self.expires_at
     
     def to_dict(self) -> dict[str, Any]:
 
