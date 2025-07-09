@@ -70,12 +70,12 @@ class Config(BaseSettings):
     @property
     def ws_url(self) -> str:
         """Get WebSocket URL."""
-        return f"wss://{self.ws_host}:{self.ws_port}"
+        return f"wss://{self.ws_host}"
     
     @property
     def http_url(self) -> str:
         """Get HTTP URL."""
-        return f"https://{self.ws_host}:{self.ws_port}"
+        return f"https://{self.ws_host}"
     
     def ensure_upload_dir(self) -> None:
         """Ensure upload directory exists."""

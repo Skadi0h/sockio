@@ -20,7 +20,7 @@ services:
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
       - WS_HOST=orro.chat
-      - WS_PORT=443
+      - WS_PORT=3000
       - WS_MAX_PAYLOAD=10485760
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
@@ -28,7 +28,7 @@ services:
       - PEM_KEY_PATH=/etc/letsencrypt/live/orro.chat/privkey.pem
       - PEM_CHAIN_PATH=/etc/letsencrypt/live/orro.chat/fullchain.pem
     ports:
-      - "443:443"
+      - "443:3000"
     volumes:
       - ./sockio/:/app/sockio/
       - cert_volume:/etc/letsencrypt:ro
