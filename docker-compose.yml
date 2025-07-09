@@ -28,7 +28,7 @@ services:
       - PEM_KEY_PATH=/etc/letsencrypt/live/orro.chat/privkey.pem
       - PEM_CHAIN_PATH=/etc/letsencrypt/live/orro.chat/fullchain.pem
     ports:
-      - "443:3000"
+      - "443:443"
     volumes:
       - ./sockio/:/app/sockio/
       - cert_volume:/etc/letsencrypt:ro
