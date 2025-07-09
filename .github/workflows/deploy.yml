@@ -20,7 +20,7 @@ jobs:
 
       - name: Remove ALL old deployment files on VPS
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ env.VPS_HOST }} \
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} \
           "rm -rf /opt/sockio/* /opt/sockio/.[!.]* /opt/sockio/..?* || true"
 
       - name: Copy files to VPS
