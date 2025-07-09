@@ -1,29 +1,14 @@
 services:
   buypass:
-    image: alpine:latest
+    image: neilpang/acme.sh
     container_name: buypass_acme
     volumes:
       - cert_volume:/acme.sh
     ports:
       - "80:80"
-    entrypoint: [ "/bin/sh", "-c" ]
-    command: |
-      "apk add --no-cache openssl curl bash socat &&
-       if [ ! -d /acme.sh ]; then
-         echo 'Installing acme.sh...';
-         curl https://get.acme.sh | sh -s email=you@example.com;
-       fi;
-       echo 'Using acme.sh home: /acme.sh';
-       if [ ! -f /acme.sh/account.conf ]; then
-         echo 'Registering new Buypass ACME account...';
-         ~/.acme.sh/acme.sh --home /acme.sh --register-account -m you@example.com --server https://api.buypass.com/acme/directory;
-       else
-         echo 'Account already exists. Skipping registration.';
-       fi;
-       echo 'Issuing or renewing cert...';
-       ~/.acme.sh/acme.sh --home /acme.sh --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory;"
-  
-  
+    command: >
+      --register-account -m skadskad13@gmail.com --server https://api.buypass.com/acme/directory &&
+      --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory
 
   app:
     build: .
@@ -31,6 +16,8 @@ services:
     depends_on:
       buypass:
         condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
     environment:
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
