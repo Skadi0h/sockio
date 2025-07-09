@@ -13,7 +13,7 @@ services:
       openssl req -x509 -nodes -days 365 \
       -newkey rsa:2048 \
       -keyout /certs/privkey.pem \
-      -out /certs/cert.pem \
+      -out /certs/fullchain.pem \
       -subj '/CN=localhost'"
 
   app:
@@ -27,6 +27,8 @@ services:
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
+      - PEM_KEY_PATH=../misc/privkey.pem
+      - PEM_CHAIN_PATH=../misc/fullchain.pem
     ports:
       - "443:3000"
     depends_on:

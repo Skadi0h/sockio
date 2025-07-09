@@ -64,6 +64,8 @@ class Config(BaseSettings):
     # Message settings
     max_message_length: int = Field(default=4000, env="MAX_MESSAGE_LENGTH")
     message_history_limit: int = Field(default=100, env="MESSAGE_HISTORY_LIMIT")
+    pem_key_path: str = Field(env='PEM_KEY_PATH')
+    pem_chain_path: str = Field(env='PEM_CHAIN_PATH')
     
     @property
     def ws_url(self) -> str:
