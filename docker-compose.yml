@@ -18,7 +18,7 @@ services:
     environment:
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
-      - WS_HOST=localhost
+      - WS_HOST=orro.chat
       - WS_PORT=3000
       - WS_MAX_PAYLOAD=10485760
       - WS_IDLE_TIMEOUT=300
