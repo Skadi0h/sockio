@@ -1,17 +1,21 @@
-version: "3.8"
-
 services:
   certbot:
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - /opt/misc:/etc/letsencrypt/live/orro.chat
+      - cert_volume:/etc/letsencrypt
     ports:
       - "80:80"
     command: certonly --standalone --non-interactive --agree-tos -d orro.chat
 
   app:
     build: .
+    container_name: socketify_app
+    depends_on:
+      certbot:
+        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
     environment:
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
@@ -21,24 +25,20 @@ services:
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=/opt/misc/privkey.pem
-      - PEM_CHAIN_PATH=/opt/misc/cert.pem
+      - PEM_KEY_PATH=/etc/letsencrypt/live/orro.chat/privkey.pem
+      - PEM_CHAIN_PATH=/etc/letsencrypt/live/orro.chat/fullchain.pem
     ports:
       - "443:3000"
-    depends_on:
-      mongo:
-        condition: service_healthy
-      certbot:
-        condition: service_completed_successfully
     volumes:
       - ./sockio/:/app/sockio/
-      - /opt/misc:/misc:ro
+      - cert_volume:/etc/letsencrypt:ro
     networks:
       - sockio_network
     command: [ "uv", "run", "python", "-m", "sockio.main" ]
 
   mongo:
     image: mongo:7.0
+    container_name: sockio_mongo
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password123
@@ -64,4 +64,6 @@ volumes:
   mongo_data:
     driver: local
   mongo_config:
+    driver: local
+  cert_volume:
     driver: local
