@@ -1,14 +1,23 @@
 services:
   buypass:
-    image: neilpang/acme.sh
+    image: alpine:latest
     container_name: buypass_acme
     volumes:
       - cert_volume:/acme.sh
     ports:
       - "80:80"
-    command: >
-      --register-account -m your@email.com --server https://api.buypass.com/acme/directory &&
-      --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "apk add --no-cache openssl curl bash &&
+       curl https://get.acme.sh | sh &&
+       if [ ! -f /acme.sh/account.conf ]; then
+         echo 'Registering new Buypass ACME account...';
+         ~/.acme.sh/acme.sh --register-account -m skadskad13@gmail.com --server https://api.buypass.com/acme/directory;
+       else
+         echo 'Account already exists. Skipping registration.';
+       fi;
+       echo 'Issuing or renewing cert...';
+       ~/.acme.sh/acme.sh --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory;"
 
   app:
     build: .
@@ -16,19 +25,17 @@ services:
     depends_on:
       buypass:
         condition: service_completed_successfully
-      mongo:
-        condition: service_healthy
     environment:
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
-      - WS_HOST=orro.chat
+      - WS_HOST=localhost
       - WS_PORT=3000
       - WS_MAX_PAYLOAD=10485760
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=/acme.sh/orro.chat/privkey.pem
-      - PEM_CHAIN_PATH=/acme.sh/orro.chat/fullchain.pem
+      - PEM_KEY_PATH=/acme.sh/orro.chat_ecc/privkey.key
+      - PEM_CHAIN_PATH=/acme.sh/orro.chat_ecc/fullchain.cer
     ports:
       - "443:3000"
     volumes:
