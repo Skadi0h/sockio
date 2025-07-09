@@ -69,7 +69,7 @@ def create_app() -> App:
     app = App(
         AppOptions(
             key_file_name="../misc/privkey.pem",
-            cert_file_name="../misc/fullchain.pem"
+            cert_file_name="../misc/cert.pem"
         )
     )
     
