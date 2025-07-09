@@ -26,8 +26,8 @@ services:
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=/acme.sh/live/orro.chat/privkey1.pem
-      - PEM_CHAIN_PATH=/acme.sh/live/orro.chat/fullchain1.pem
+      - PEM_KEY_PATH=/acme.sh/orro.chat_ecc/orro.chat.key
+      - PEM_CHAIN_PATH=/acme.sh/orro.chat_ecc/fullchain.cer
     ports:
       - "443:3000"
     volumes:
