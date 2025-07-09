@@ -7,7 +7,7 @@ services:
     ports:
       - "80:80"
     command: >
-      --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory
+      --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory || true
 
   app:
     build: .
