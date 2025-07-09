@@ -245,7 +245,7 @@ class AuthenticationManager:
                 return None
             
             # Get user
-            user = await User.get(session.user_id.id)
+            user = await User.get(session.user_id)
             return user
             
         except Exception as e:
