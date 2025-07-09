@@ -637,7 +637,7 @@ def generate_openapi_spec() -> Dict[str, Any]:
                     }
                 }
             },
-            "/health": {
+            "/api/health": {
                 "get": {
                     "tags": ["System"],
                     "summary": "Health check",
@@ -660,7 +660,7 @@ def generate_openapi_spec() -> Dict[str, Any]:
                     }
                 }
             },
-            "/info": {
+            "/api/info": {
                 "get": {
                     "tags": ["System"],
                     "summary": "Server information",

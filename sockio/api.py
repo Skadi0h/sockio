@@ -526,10 +526,10 @@ class SocketifyAPI:
             logger.error("Error searching users", error=str(e))
             self._send_error(res, "Internal server error", 500)
     
-    def _handle_health(self, res, req):
+    async def _handle_health(self, res, req):
         self._send_json_response(res, {"status": "healthy"})
     
-    def _handle_info(self, res, req):
+    async def _handle_info(self, res, req):
         self._send_json_response(res, {
             "name": "Chat API",
             "version": "1.0.0",
