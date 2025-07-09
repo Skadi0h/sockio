@@ -7,14 +7,12 @@ services:
     ports:
       - "80:80"
     command: >
-      --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory || true
+      --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory
 
   app:
     build: .
     container_name: socketify_app
     depends_on:
-      buypass:
-        condition: service_completed_successfully
       mongo:
         condition: service_healthy
     environment:
