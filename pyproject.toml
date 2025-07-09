@@ -5,7 +5,6 @@ description = "WebSocket chat server"
 authors = [
     {name = "devpastor", email = "skadskad13@gmail.com"}
 ]
-readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     # Core WebSocket and MongoDB dependencies
