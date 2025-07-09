@@ -1,18 +1,21 @@
+version: "3.8"
+
 services:
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
+  buypass:
+    image: neilpang/acme.sh
+    container_name: buypass_acme
     volumes:
-      - cert_volume:/etc/letsencrypt
+      - cert_volume:/acme.sh
     ports:
       - "80:80"
-    command: certonly --standalone --force-renew --non-interactive --agree-tos -d orro.chat
+    command: >
+      --issue --standalone --server https://api.buypass.com/acme/directory -d orro.chat
 
   app:
     build: .
     container_name: socketify_app
     depends_on:
-      certbot:
+      buypass:
         condition: service_completed_successfully
       mongo:
         condition: service_healthy
@@ -25,13 +28,13 @@ services:
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=/etc/letsencrypt/live/orro.chat/privkey.pem
-      - PEM_CHAIN_PATH=/etc/letsencrypt/live/orro.chat/fullchain.pem
+      - PEM_KEY_PATH=/acme.sh/orro.chat/privkey.pem
+      - PEM_CHAIN_PATH=/acme.sh/orro.chat/fullchain.pem
     ports:
       - "443:3000"
     volumes:
       - ./sockio/:/app/sockio/
-      - cert_volume:/etc/letsencrypt:ro
+      - cert_volume:/acme.sh:ro
     networks:
       - sockio_network
     command: [ "uv", "run", "python", "-m", "sockio.main" ]
