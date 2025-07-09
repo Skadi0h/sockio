@@ -5,7 +5,7 @@ services:
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - ./misc:/etc/letsencrypt/live/orro.chat
+      - /opt/misc:/etc/letsencrypt/live/orro.chat
     ports:
       - "80:80"
     command: certonly --standalone --non-interactive --agree-tos -d orro.chat
@@ -21,8 +21,8 @@ services:
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=/opt/sockio/misc/privkey.pem
-      - PEM_CHAIN_PATH=/opt/sockio/misc/fullchain.pem
+      - PEM_KEY_PATH=/opt/misc/privkey.pem
+      - PEM_CHAIN_PATH=/opt/misc/fullchain.pem
     ports:
       - "443:3000"
     depends_on:
@@ -32,7 +32,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./sockio/:/app/sockio/
-      - ./misc:/misc:ro
+      - /opt/misc:/misc:ro
     networks:
       - sockio_network
     command: [ "uv", "run", "python", "-m", "sockio.main" ]
