@@ -1,8 +1,8 @@
 import asyncio
-from socketify import App, CompressOptions, WebSocket
+from socketify import App, CompressOptions, WebSocket, AppOptions
 from sockio.log import make_logger
 from sockio.config import config
-from sockio.db import init_db, create_default_admin_user, periodic_cleanup
+from sockio.db import init_db, create_default_admin_user
 from sockio.connection_manager import connection_manager
 from sockio.message_handler import message_handler
 from sockio.api import SocketifyAPI
@@ -66,7 +66,12 @@ async def setup_server():
 
 
 def create_app() -> App:
-    app = App()
+    app = App(
+        AppOptions(
+            key_file_name="../misc/privkey.pem",
+            cert_file_name="../misc/fullchain.pem"
+        )
+    )
     
     app.ws("/ws", {
         "compression": CompressOptions.SHARED_COMPRESSOR,

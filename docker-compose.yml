@@ -1,9 +1,18 @@
+version: "3.8"
+
 services:
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./misc:/etc/letsencrypt/live/orro.chat
+    ports:
+      - "80:80"
+    command: certonly --standalone --non-interactive --agree-tos -d orro.chat
+
   app:
     build: .
     environment:
-      - UV_COMPILE_BYTECODE=1
-      - UV_LINK_MODE=copy
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
       - WS_HOST=localhost
@@ -13,16 +22,18 @@ services:
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
     ports:
-      - "80:3000"
       - "443:3000"
     depends_on:
       mongo:
         condition: service_healthy
+      certbot:
+        condition: service_completed_successfully
     volumes:
       - ./sockio/:/app/sockio/
+      - ./misc:/misc:ro
     networks:
       - sockio_network
-    command: [ "uv", "run", "watchfiles","sockio.main.main" ]
+    command: [ "uv", "run", "python", "-m", "sockio.main" ]
 
   mongo:
     image: mongo:7.0

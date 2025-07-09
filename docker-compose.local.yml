@@ -1,9 +1,24 @@
+version: "3.8"
+
 services:
+  certgen:
+    image: alpine:latest
+    container_name: certgen
+    volumes:
+      - ./misc:/certs
+    entrypoint: sh
+    command: -c "
+      apk add --no-cache openssl &&
+      mkdir -p /certs &&
+      openssl req -x509 -nodes -days 365 \
+      -newkey rsa:2048 \
+      -keyout /certs/privkey.pem \
+      -out /certs/fullchain.pem \
+      -subj '/CN=localhost'"
+
   app:
     build: .
     environment:
-      - UV_COMPILE_BYTECODE=1
-      - UV_LINK_MODE=copy
       - MONGODB_URL=mongodb://admin:password123@mongo:27017
       - MONGODB_DATABASE=sockio_db
       - WS_HOST=localhost
@@ -13,13 +28,15 @@ services:
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
     ports:
-      - "80:3000"
       - "443:3000"
     depends_on:
+      certgen:
+        condition: service_completed_successfully
       mongo:
         condition: service_healthy
     volumes:
       - ./sockio/:/app/sockio/
+      - ./misc:/misc:ro
     networks:
       - sockio_network
     command: [ "uv", "run", "python", "-m", "sockio.main" ]
