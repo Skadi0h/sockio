@@ -6,7 +6,7 @@ services:
       - cert_volume:/etc/letsencrypt
     ports:
       - "80:80"
-    command: certonly --standalone --staging --non-interactive --agree-tos -d orro.chat
+    command: certonly --standalone --non-interactive --agree-tos -d orro.chat
 
   app:
     build: .
