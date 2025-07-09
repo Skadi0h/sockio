@@ -7,7 +7,6 @@ services:
     ports:
       - "80:80"
     command: >
-      --register-account -m skadskad13@gmail.com --server https://api.buypass.com/acme/directory &&
       --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory
 
   app:
@@ -27,8 +26,8 @@ services:
       - WS_IDLE_TIMEOUT=300
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=/acme.sh/orro.chat_ecc/privkey.key
-      - PEM_CHAIN_PATH=/acme.sh/orro.chat_ecc/fullchain.cer
+      - PEM_KEY_PATH=/acme.sh/live/orro.chat/privkey1.pem
+      - PEM_CHAIN_PATH=/acme.sh/live/orro.chat/fullchain1.pem
     ports:
       - "443:3000"
     volumes:
