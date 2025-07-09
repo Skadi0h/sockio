@@ -8,16 +8,17 @@ services:
       - "80:80"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-      "apk add --no-cache openssl curl bash &&
+      "apk add --no-cache openssl curl bash socat &&
        curl https://get.acme.sh | sh &&
        if [ ! -f /acme.sh/account.conf ]; then
          echo 'Registering new Buypass ACME account...';
-         ~/.acme.sh/acme.sh --register-account -m skadskad13@gmail.com --server https://api.buypass.com/acme/directory;
+         ~/.acme.sh/acme.sh --register-account -m you@example.com --server https://api.buypass.com/acme/directory;
        else
          echo 'Account already exists. Skipping registration.';
        fi;
        echo 'Issuing or renewing cert...';
        ~/.acme.sh/acme.sh --issue --standalone -d orro.chat --server https://api.buypass.com/acme/directory;"
+  
 
   app:
     build: .
