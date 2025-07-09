@@ -18,6 +18,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      - name: Remove old deployment files on VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ env.VPS_HOST }} \
+          "rm -rf /opt/sockio/*"
+
       - name: Copy files to VPS
         run: |
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
