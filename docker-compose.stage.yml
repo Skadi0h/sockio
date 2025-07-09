@@ -22,7 +22,7 @@ services:
       - ./sockio/:/app/sockio/
     networks:
       - sockio_network
-    command: [ "uv", "run", "watchfiles","sockio.main.main" ]
+    command: [ "uv", "run", "python", "-m", "sockio.main" ]
 
   mongo:
     image: mongo:7.0

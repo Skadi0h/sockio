@@ -31,4 +31,4 @@ jobs:
       - name: Run docker compose on VPS
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} \
-          "cd /opt/sockio && docker compose up -d --build"
+          "cd /opt/sockio && docker compose -f docker-compose.stage.yml up -d --build"

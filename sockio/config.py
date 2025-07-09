@@ -65,10 +65,6 @@ class Config(BaseSettings):
     max_message_length: int = Field(default=4000, env="MAX_MESSAGE_LENGTH")
     message_history_limit: int = Field(default=100, env="MESSAGE_HISTORY_LIMIT")
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-    
     @property
     def ws_url(self) -> str:
         """Get WebSocket URL."""
