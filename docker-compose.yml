@@ -1,21 +1,24 @@
 services:
   app:
     build: .
-    container_name: sockio_app
     environment:
       - UV_COMPILE_BYTECODE=1
       - UV_LINK_MODE=copy
     ports:
       - "80:3000"
       - "443:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
     volumes:
       - ./sockio/:/app/sockio/
       - ./.env/:/app/.env
+    networks:
+      - sockio_network
     command: [ "uv", "run", "watchfiles","sockio.main.main" ]
 
   mongo:
     image: mongo:7.0
-    container_name: sockio_mongo
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password123
