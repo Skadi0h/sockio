@@ -23,7 +23,7 @@ jobs:
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
             uv.lock \
             pyproject.toml \
-            docker-compose.yml \
+            docker-compose.stage.yml \
             Dockerfile \
             sockio \
             root@${{ secrets.VPS_HOST }}:/opt/sockio/
