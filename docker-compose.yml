@@ -22,7 +22,7 @@ services:
       - WS_ROOM_NAME=room
       - LOG_LEVEL=INFO
       - PEM_KEY_PATH=/opt/misc/privkey.pem
-      - PEM_CHAIN_PATH=/opt/misc/fullchain.pem
+      - PEM_CHAIN_PATH=/opt/misc/cert.pem
     ports:
       - "443:3000"
     depends_on:
