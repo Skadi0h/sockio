@@ -267,8 +267,8 @@ class SocketifyAPI:
                 self._send_error(res, "Conversation ID required", 400)
                 return
             
-            limit = int(self._get_query_param(req, "limit", "50"))
-            offset = int(self._get_query_param(req, "offset", "0"))
+            limit = int(self._get_query_param(res, "limit", "50"))
+            offset = int(self._get_query_param(res, "offset", "0"))
             
             messages = await chat_service.get_conversation_messages(conversation_id, limit, offset)
             
@@ -507,17 +507,17 @@ class SocketifyAPI:
     
     async def _handle_search_users(self, res, req):
         try:
-            user = await self._verify_session(req)
+            user = await self._verify_session(res)
             if not user:
                 self._send_error(res, "Invalid session", 401)
                 return
             
-            query = self._get_query_param(req, "q")
+            query = self._get_query_param(res, "q")
             if not query:
                 self._send_error(res, "Search query required", 400)
                 return
             
-            limit = int(self._get_query_param(req, "limit", "20"))
+            limit = int(self._get_query_param(res, "limit", "20"))
             users = await contact_service.search_users(query, str(user.id), limit)
             
             self._send_json_response(res, {"users": users})
