@@ -503,11 +503,13 @@ class SocketifyAPI:
     
     async def _handle_search_users(self, res: AppResponse, req: AppRequest):
         logger.info('In search users [0]')
+        req.preserve()
         try:
             user = await self._verify_session(req)
             logger.info('In search users [1]')
             if not user:
                 logger.info('In search users [2]')
+               
                 self._send_error(res, "Invalid session", 401)
                 return
             logger.info('In search users [3]')
