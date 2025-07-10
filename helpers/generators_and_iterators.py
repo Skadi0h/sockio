@@ -1,99 +1,50 @@
-# GENERATORS & ITERATORS
-from collections.abc import Generator, Iterable
-from typing import Iterator
-
-
-# 1) Iteration?
-# процесс перебирания чего-либо
-# for x in ...?
-
-# 2) Iterable object ->>> его можно перебрать, итерируеремый объект
-# File objects ->>>> его можно перебрать
-# Lists ---> его можно перебрать
-# Str - yes
-# dict
-# ....
-# те, у которых есть метод __iter__()
-
-# ITERATOR
-# ANY CYCLE + YIELD IN CYCLE == ITERATOR
-
-def one_ten_iterator():
-    # генерирует числа от 1 до 10
-    # for number in
-    
-    counter = 1
-    while counter <= 10:
-        yield counter
-        counter += 1
-
-
-def names_iterator():
-    names = ["OLEG", "IVAN", "TANYA"]
-    
-    for name in names:
-        yield name
-
-
-my_iterator = one_ten_iterator()
-
-# print(
-#     next(my_iterator)
-# )
-# print(
-#     next(my_iterator)
-# )
-# print(
-#     next(my_iterator)
-# )
-
-
-# def magic_iterator():
-#     number = 0
-#     while True:
-#         next_number = yield number
-#         number += next_number
-#
-# iterator = magic_iterator()
-# iterator.send(None)
-#
-# print(iterator.send(10))
-# print(iterator.send(70))
-
-
-# Сделать свой range(...)
-def my_range(start: int, end: int, step: int = 1) -> int:
-    counter = start
-    while counter < end and  counter % 2 != 0 :
-        yield counter
-        counter += step
-
-print(list(my_range(5, 15)))
-
-def my_letter_generator(word: str) -> str:
-    for letter in word:
-        yield letter
-
-# сделать генератор который будет поочередно отдавать отрицательное и положительное число
 import tkinter as tk
+from collections.abc import Generator
+def main():
+    value = ""
+    with open('workfile', mode = "r", encoding="utf-8") as f:
+        value = f.read()
 
-def plus_minus_calculator(number: int) -> int:
-   counter = number
-   while True:
-        yield counter
-        counter *= -1
-generator = plus_minus_calculator(1)
-root = tk.Tk()
-root.title("Лампочка")
-canvas = tk.Canvas(root, width=200, height=200, bg="white")
-canvas.pack()
-lamp = canvas.create_oval(50, 50, 150, 150, fill="grey")
-def update_lamp():
-    value = next(generator)
-    if value > 0:
-        canvas.itemconfig(lamp, fill="yellow")
-    else:
-        canvas.itemconfig(lamp, fill="grey")
-    root.after(500, update_lamp)
-update_lamp()
-root.mainloop()
+    def plus_minus_calculator(colour: str | None = None) -> Generator[str]:
+       while True:
+            yield colour or "red"
+            colour = ""
+            yield "gray"
+            yield "yellow"
+            yield "gray"
+            yield "green"
+            yield "gray"
+            yield "yellow"
+            yield "gray"
+
+    generator = plus_minus_calculator(value)
+    root = tk.Tk()
+    root.title("Лампочка")
+    canvas = tk.Canvas(root, width=400, height=400, bg="white")
+    canvas.pack()
+    lamp1 = canvas.create_oval(50, 50, 150, 150, fill="gray")
+    lamp2 = canvas.create_oval(50, 170, 150, 270, fill="gray")
+    lamp3 = canvas.create_oval(50, 290, 150, 390, fill="gray")
+
+    def update_lamp():
+        nonlocal value, generator
+        value = next(generator)
+        if value == "red":
+            canvas.itemconfig(lamp1, fill="red")
+        elif value == "yellow":
+            canvas.itemconfig(lamp2, fill="yellow")
+        elif value == "green":
+            canvas.itemconfig(lamp3, fill="green")
+        else:
+            canvas.itemconfig(lamp1, fill="gray")
+            canvas.itemconfig(lamp2, fill="gray")
+            canvas.itemconfig(lamp3, fill="gray")
+        root.after(1000, update_lamp)
+
+        f = open('workfile', 'w', encoding="utf-8")
+        f.write(value)
+        f.close()
+    update_lamp()
+    root.mainloop()
+main()
+
