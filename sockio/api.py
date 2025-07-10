@@ -1,5 +1,4 @@
 import json
-import asyncio
 from typing import Dict, Any, Optional
 from socketify import App
 from socketify.socketify import AppRequest, AppResponse

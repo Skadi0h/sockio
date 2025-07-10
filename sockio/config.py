@@ -49,7 +49,7 @@ class Config(BaseSettings):
     
     # Logging settings
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_format: str = Field(default="text", env="LOG_FORMAT")  # json or text
+    log_format: str = Field(default="json", env="LOG_FORMAT")  # json or text
     
     # CORS settings
     cors_origins: List[str] = Field(default=["*"], env="CORS_ORIGINS")
