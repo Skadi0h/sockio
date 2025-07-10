@@ -98,30 +98,19 @@ def create_app() -> App:
     return app
 
 
-def main():
-    try:
-        logger.info("Background cleanup task started")
-        app = create_app()
-        logger.info(f"Starting unified server on {config.ws_host}:{config.ws_port}")
-        logger.info(f"WebSocket endpoint: {config.ws_url}/ws")
-        logger.info(f"HTTP API endpoints: {config.http_url}/api/*")
-        logger.info(f"API Documentation: {config.http_url}/docs")
-        logger.info(f"ReDoc Documentation: {config.http_url}/redoc")
-        logger.info(f"WebSocket Documentation: {config.http_url}/websocket-docs")
-        logger.info(f"OpenAPI Spec: {config.http_url}/api/openapi.json")
-        app.listen(
-            config.ws_port,
-            lambda config_obj: logger.info(f"Server listening on {config.ws_url}")
-        )
-        app.run()
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        logger.info("Server shutdown requested")
-    except Exception as e:
-        logger.error(f"Failed to start server: {e}")
-        raise
-
-
 if __name__ == "__main__":
-    main()
+    app = create_app()
+    logger.info(f"Starting unified server on {config.ws_host}:{config.ws_port}")
+    logger.info(f"WebSocket endpoint: {config.ws_url}/ws")
+    logger.info(f"HTTP API endpoints: {config.http_url}/api/*")
+    logger.info(f"API Documentation: {config.http_url}/docs")
+    logger.info(f"ReDoc Documentation: {config.http_url}/redoc")
+    logger.info(f"WebSocket Documentation: {config.http_url}/websocket-docs")
+    logger.info(f"OpenAPI Spec: {config.http_url}/api/openapi.json")
+    app.listen(
+        config.ws_port,
+        lambda config_obj: logger.info(f"Server listening on {config.ws_url}")
+    )
+    app.run()
 
 
