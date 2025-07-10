@@ -514,9 +514,9 @@ class SocketifyAPI:
                 return
             logger.info('In search users [3]')
             query = req.get_query('q')
-            logger.info('In search users [4]')
+            logger.info('In search users [4]', , query=query)
             if not query:
-                logger.info('In search users [5]', query=query)
+                logger.info('In search users [5]')
                 self._send_error(res, "Search query required", 400)
                 return
             
