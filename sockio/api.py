@@ -94,9 +94,9 @@ class SocketifyAPI:
             return None
         return await auth_manager.verify_session(session_token)
     
-    async def _handle_register(self, res, _):
+    async def _handle_register(self, res, req):
         try:
-            body = await res.get_json()
+            body = await req.get_json()
             
             request = UserRegistrationRequest(**body)
             response = await auth_manager.register_user(request)
@@ -115,7 +115,7 @@ class SocketifyAPI:
     
     async def _handle_login(self, res, req):
         try:
-            body = await res.get_json()
+            body = await req.get_json()
             
             request = UserLoginRequest(**body)
             response = await auth_manager.login_user(request)
@@ -132,22 +132,19 @@ class SocketifyAPI:
             logger.error("Error in login", error=str(e))
             self._send_error(res, "Internal server error", 500)
     
-    def _handle_logout(self, res, req):
-        async def handle():
-            try:
-                session_token = self._get_session_token(req)
-                if not session_token:
-                    self._send_error(res, "Session token required", 401)
-                    return
-                
-                response = await auth_manager.logout_user(session_token)
-                self._send_json_response(res, response.dict())
+    async def _handle_logout(self, res, req):
+        try:
+            session_token = self._get_session_token(req)
+            if not session_token:
+                self._send_error(res, "Session token required", 401)
+                return
             
-            except Exception as e:
-                logger.error("Error in logout", error=str(e))
-                self._send_error(res, "Internal server error", 500)
+            response = await auth_manager.logout_user(session_token)
+            self._send_json_response(res, response.dict())
         
-        asyncio.create_task(handle())
+        except Exception as e:
+            logger.error("Error in logout", error=str(e))
+            self._send_error(res, "Internal server error", 500)
     
     async def _handle_get_current_user(self, res, req):
         try:
@@ -507,17 +504,17 @@ class SocketifyAPI:
     
     async def _handle_search_users(self, res, req):
         try:
-            user = await self._verify_session(res)
+            user = await self._verify_session(req)
             if not user:
                 self._send_error(res, "Invalid session", 401)
                 return
             
-            query = self._get_query_param(res, "q")
+            query = self._get_query_param(req, "q")
             if not query:
                 self._send_error(res, "Search query required", 400)
                 return
             
-            limit = int(self._get_query_param(res, "limit", "20"))
+            limit = int(self._get_query_param(req, "limit", "20"))
             users = await contact_service.search_users(query, str(user.id), limit)
             
             self._send_json_response(res, {"users": users})
