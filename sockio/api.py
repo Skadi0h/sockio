@@ -94,9 +94,9 @@ class SocketifyAPI:
             return None
         return await auth_manager.verify_session(session_token)
     
-    async def _handle_register(self, res, req):
+    async def _handle_register(self, res: AppResponse, req: AppRequest):
         try:
-            body = await req.get_json()
+            body = await res.get_json()
             
             request = UserRegistrationRequest(**body)
             response = await auth_manager.register_user(request)
@@ -501,7 +501,7 @@ class SocketifyAPI:
             logger.error("Error getting blocked users", error=str(e))
             self._send_error(res, "Internal server error", 500)
     
-    async def _handle_search_users(self, res, req):
+    async def _handle_search_users(self, res: AppResponse, req: AppRequest):
         try:
             user = await self._verify_session(req)
             if not user:
