@@ -2,6 +2,7 @@ import json
 import asyncio
 from typing import Dict, Any, Optional
 from socketify import App
+from socketify.socketify import AppRequest, AppResponse
 
 from sockio.auth import auth_manager, UserRegistrationRequest, UserLoginRequest
 from sockio.chat_service import chat_service
@@ -113,10 +114,9 @@ class SocketifyAPI:
             logger.error("Error in register", error=str(e))
             self._send_error(res, "Internal server error", 500)
     
-    async def _handle_login(self, res, req):
+    async def _handle_login(self, res: AppResponse, _: AppRequest):
         try:
-            body = await req.get_json()
-            
+            body = await res.get_json()
             request = UserLoginRequest(**body)
             response = await auth_manager.login_user(request)
             
@@ -146,7 +146,7 @@ class SocketifyAPI:
             logger.error("Error in logout", error=str(e))
             self._send_error(res, "Internal server error", 500)
     
-    async def _handle_get_current_user(self, res, req):
+    async def _handle_get_current_user(self, res: AppResponse, req: AppRequest):
         try:
             user = await self._verify_session(req)
             if not user:
