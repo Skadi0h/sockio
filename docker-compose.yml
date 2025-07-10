@@ -28,6 +28,7 @@ services:
       - PEM_CHAIN_PATH=/acme.sh/orro.chat_ecc/fullchain.cer
     ports:
       - "443:3000"
+    restart: unless-stopped
     volumes:
       - ./sockio/:/app/sockio/
       - cert_volume:/acme.sh:ro
@@ -50,10 +51,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 10s
+      interval: 20s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 20s
 
 networks:
   sockio_network:
