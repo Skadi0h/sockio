@@ -522,7 +522,7 @@ class SocketifyAPI:
             
             #limit = int(self._get_query_param(req, "limit", "20"))
             logger.info('In search users [6]')
-            users = await contact_service.search_users(query[1], str(user.id), 20)
+            users = await contact_service.search_users(query[0], str(user.id), 20)
             logger.info('In search users [7]')
             
             self._send_json_response(res, {"users": users})
