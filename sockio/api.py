@@ -502,25 +502,35 @@ class SocketifyAPI:
             self._send_error(res, "Internal server error", 500)
     
     async def _handle_search_users(self, res: AppResponse, req: AppRequest):
+        logger.info('In search users [0]')
         try:
             user = await self._verify_session(req)
+            logger.info('In search users [1]')
             if not user:
+                logger.info('In search users [2]')
                 self._send_error(res, "Invalid session", 401)
                 return
-            
+            logger.info('In search users [3]')
             query = req.get_query('q')
+            logger.info('In search users [4]')
             if not query:
+                logger.info('In search users [5]')
                 self._send_error(res, "Search query required", 400)
                 return
             
             #limit = int(self._get_query_param(req, "limit", "20"))
+            logger.info('In search users [6]')
             users = await contact_service.search_users(query, str(user.id), 20)
+            logger.info('In search users [7]')
             
             self._send_json_response(res, {"users": users})
+            logger.info('In search users [8]')
         
         except Exception as e:
+            logger.info('In search users [9]')
             logger.error("Error searching users", error=str(e))
             self._send_error(res, "Internal server error", 500)
+        logger.info('In search users [10]')
     
     async def _handle_health(self, res, req):
         self._send_json_response(res, {"status": "healthy"})
