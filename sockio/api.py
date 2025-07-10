@@ -508,7 +508,7 @@ class SocketifyAPI:
                 self._send_error(res, "Invalid session", 401)
                 return
             
-            query = self._get_query_param(req, "q")
+            query = req.get_query('q')
             if not query:
                 self._send_error(res, "Search query required", 400)
                 return
