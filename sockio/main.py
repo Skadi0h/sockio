@@ -75,7 +75,8 @@ def create_server() -> ASGI:
             key_file_name=config.pem_key_path,
             cert_file_name=config.pem_chain_path,
         ),
-        websocket={
+        websocket=True,
+        websocket_options={
             "compression": CompressOptions.SHARED_COMPRESSOR,
             "max_payload_length": config.ws_max_payload,
             "idle_timeout": config.ws_idle_timeout,
@@ -84,7 +85,6 @@ def create_server() -> ASGI:
             "drain": on_drain,
             "close": on_close,
         },
-        websocket_options=None,
         lifespan=True,
     )
 
