@@ -513,8 +513,8 @@ class SocketifyAPI:
                 self._send_error(res, "Search query required", 400)
                 return
             
-            limit = int(self._get_query_param(req, "limit", "20"))
-            users = await contact_service.search_users(query, str(user.id), limit)
+            #limit = int(self._get_query_param(req, "limit", "20"))
+            users = await contact_service.search_users(query, str(user.id), 20)
             
             self._send_json_response(res, {"users": users})
         
