@@ -8,6 +8,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, EmailStr, validator
 from sockio.config import config
+from sqlalchemy import select, update
+from sockio.db import db_manager, AsyncSession
 from sockio.models import User, UserSession, UserStatus
 from sockio.log import make_logger
 
@@ -68,40 +70,33 @@ class AuthenticationManager:
     async def register_user(self, registration_data: UserRegistrationRequest) -> AuthResponse:
         """Register a new user."""
         try:
-            # Check if username already exists
-            existing_user = await User.find_one(User.username == registration_data.username)
-            if existing_user:
-                return AuthResponse(
-                    success=False,
-                    message="Username already exists"
+            async with db_manager.get_session() as session:
+                result = await session.execute(select(User).where(User.username == registration_data.username))
+                if result.scalar_one_or_none():
+                    return AuthResponse(success=False, message="Username already exists")
+
+                result = await session.execute(select(User).where(User.email == registration_data.email))
+                if result.scalar_one_or_none():
+                    return AuthResponse(success=False, message="Email already exists")
+
+                user = User(
+                    username=registration_data.username,
+                    email=registration_data.email,
+                    display_name=registration_data.display_name,
+                    status=UserStatus.OFFLINE,
                 )
-            
-            # Check if email already exists
-            existing_email = await User.find_one(User.email == registration_data.email)
-            if existing_email:
-                return AuthResponse(
-                    success=False,
-                    message="Email already exists"
+                user.set_password(registration_data.password)
+                session.add(user)
+                await session.commit()
+                await session.refresh(user)
+
+                logger.info(
+                    "User registered successfully",
+                    user_id=str(user.id),
+                    username=user.username,
                 )
-            
-            # Create new user
-            user = User(
-                username=registration_data.username,
-                email=registration_data.email,
-                display_name=registration_data.display_name,
-                status=UserStatus.OFFLINE
-            )
-            user.set_password(registration_data.password)
-            
-            await user.insert()
-            
-            logger.info("User registered successfully", user_id=str(user.id), username=user.username)
-            
-            return AuthResponse(
-                success=True,
-                message="User registered successfully",
-                user=user.to_dict()
-            )
+
+                return AuthResponse(success=True, message="User registered successfully", user=user.to_dict())
             
         except Exception as e:
             logger.error("User registration failed", error=str(e))
@@ -113,36 +108,21 @@ class AuthenticationManager:
     async def login_user(self, login_data: UserLoginRequest, ip_address: str = None, user_agent: str = None) -> AuthResponse:
         """Authenticate user and create session."""
         try:
-            # Find user by username
-            user = await User.find_one(User.username == login_data.username.lower())
-            if not user:
-                return AuthResponse(
-                    success=False,
-                    message="Invalid username or password"
-                )
-            
-            # Check password
-            if not user.check_password(login_data.password):
-                return AuthResponse(
-                    success=False,
-                    message="Invalid username or password"
-                )
-        
-            session = await self.create_session(user, ip_address, user_agent)
-            
-            # Update user status and last seen
-            user.status = UserStatus.ONLINE
-            user.last_seen = datetime.now(timezone.utc)
-            await user.save()
-            
-            logger.info("User logged in successfully", user_id=str(user.id), username=user.username)
-            
-            return AuthResponse(
-                success=True,
-                message="Login successful",
-                user=user.to_dict(),
-                session_token=session.session_token
-            )
+            async with db_manager.get_session() as session_db:
+                result = await session_db.execute(select(User).where(User.username == login_data.username.lower()))
+                user = result.scalar_one_or_none()
+                if not user or not user.check_password(login_data.password):
+                    return AuthResponse(success=False, message="Invalid username or password")
+
+                session = await self.create_session(session_db, user, ip_address, user_agent)
+
+                user.status = UserStatus.ONLINE
+                user.last_seen = datetime.now(timezone.utc)
+                await session_db.commit()
+
+                logger.info("User logged in successfully", user_id=str(user.id), username=user.username)
+
+                return AuthResponse(success=True, message="Login successful", user=user.to_dict(), session_token=session.session_token)
             
         except Exception as e:
             logger.error("User login failed", error=str(e))
@@ -154,29 +134,32 @@ class AuthenticationManager:
     async def logout_user(self, session_token: str) -> AuthResponse:
         """Logout user and invalidate session."""
         try:
-            # Find and deactivate session
-            session = await UserSession.find_one(
-                UserSession.session_token == session_token,
-                UserSession.is_active == True
-            )
-            
-            if session:
-                session.is_active = False
-                await session.save()
-                
-                # Update user status to offline
-                user = await User.get(session.user_id.ref.id)
-                if user:
-                    user.status = UserStatus.OFFLINE
-                    user.last_seen = datetime.now(timezone.utc)
-                    await user.save()
-                
-                logger.info("User logged out successfully", user_id=str(session.user_id.ref.id))
-            
-            return AuthResponse(
-                success=True,
-                message="Logout successful"
-            )
+            async with db_manager.get_session() as session_db:
+                result = await session_db.execute(
+                    select(UserSession).where(
+                        UserSession.session_token == session_token,
+                        UserSession.is_active.is_(True),
+                    )
+                )
+                session_obj = result.scalar_one_or_none()
+
+                if session_obj:
+                    session_obj.is_active = False
+                    result_user = await session_db.execute(
+                        select(User).where(User.id == session_obj.user_id)
+                    )
+                    user = result_user.scalar_one_or_none()
+                    if user:
+                        user.status = UserStatus.OFFLINE
+                        user.last_seen = datetime.now(timezone.utc)
+
+                    await session_db.commit()
+
+                    logger.info(
+                        "User logged out successfully", user_id=str(session_obj.user_id)
+                    )
+
+                return AuthResponse(success=True, message="Logout successful")
             
         except Exception as e:
             logger.error("User logout failed", error=e)
@@ -185,39 +168,42 @@ class AuthenticationManager:
                 message="Logout failed"
             )
     
-    async def create_session(self, user: User, ip_address: str = None, user_agent: str = None) -> UserSession:
+    async def create_session(self, db: AsyncSession, user: User, ip_address: str | None = None, user_agent: str | None = None) -> UserSession:
         """Create a new user session."""
         session = UserSession(
-            user_id=user,
+            user_id=user.id,
             session_token=UserSession.generate_token(),
             ip_address=ip_address,
             user_agent=user_agent,
-            expires_at=datetime.now(timezone.utc) + self.session_expiration
+            expires_at=datetime.now(timezone.utc) + self.session_expiration,
         )
-        
-        await session.insert()
+        db.add(session)
+        await db.commit()
+        await db.refresh(session)
         return session
     
     async def verify_session(self, session_token: str) -> Optional[User]:
         """Verify session token and return user."""
         try:
-            session = await UserSession.find_one(
-                UserSession.session_token == session_token,
-                UserSession.is_active == True
-            )
-            
-            if not session:
-                return None
-            
-            # Check if session is expired
-            if session.is_expired():
-                session.is_active = False
-                await session.save()
-                return None
-            
-            # Get user
-            user = await User.get(session.user_id.ref.id)
-            return user
+            async with db_manager.get_session() as session_db:
+                result = await session_db.execute(
+                    select(UserSession).where(
+                        UserSession.session_token == session_token,
+                        UserSession.is_active.is_(True),
+                    )
+                )
+                session_obj = result.scalar_one_or_none()
+
+                if not session_obj:
+                    return None
+
+                if session_obj.is_expired():
+                    session_obj.is_active = False
+                    await session_db.commit()
+                    return None
+
+                user_result = await session_db.execute(select(User).where(User.id == session_obj.user_id))
+                return user_result.scalar_one_or_none()
             
         except Exception as e:
             logger.error("Session verification failed", error=str(e))
@@ -234,17 +220,20 @@ class AuthenticationManager:
     async def update_websocket_session(self, session_token: str, websocket_id: str) -> bool:
         """Update session with WebSocket ID."""
         try:
-            session = await UserSession.find_one(
-                UserSession.session_token == session_token,
-                UserSession.is_active == True
-            )
-            
-            if session:
-                session.websocket_id = websocket_id
-                await session.save()
-                return True
-            
-            return False
+            async with db_manager.get_session() as session_db:
+                result = await session_db.execute(
+                    select(UserSession).where(
+                        UserSession.session_token == session_token,
+                        UserSession.is_active.is_(True),
+                    )
+                )
+                session_obj = result.scalar_one_or_none()
+                if session_obj:
+                    session_obj.websocket_id = websocket_id
+                    await session_db.commit()
+                    return True
+
+                return False
             
         except Exception as e:
             logger.error("Failed to update WebSocket session", error=str(e))
