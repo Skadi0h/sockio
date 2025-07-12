@@ -22,9 +22,8 @@ class Config(BaseSettings):
     ws_idle_timeout: int = Field(default=300, env="WS_IDLE_TIMEOUT")  # 5 minutes
     ws_room_name: str = Field(default="general", env="WS_ROOM_NAME")
     
-    # MongoDB settings
-    mongodb_url: str = Field(default="mongodb://localhost:27017", env="MONGODB_URL")
-    mongodb_database: str = Field(default="sockio_db", env="MONGODB_DATABASE")
+    # PostgreSQL settings
+    postgres_url: str = Field(default="postgresql+asyncpg://user:password@localhost/sockio", env="POSTGRES_URL")
     
     # Authentication settings
     jwt_secret_key: str = Field(default="your-secret-key-change-in-production", env="JWT_SECRET_KEY")
