@@ -117,7 +117,7 @@ class Conversation(Document):
             'name': self.name,
             'description': self.description,
             'avatar_url': self.avatar_url,
-            'created_by': str(self.created_by.id) if self.created_by else None,
+            'created_by': str(self.created_by.ref.id) if self.created_by else None,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'is_active': self.is_active

@@ -1,60 +1,13 @@
-version: "3.8"
-
 services:
-  certgen:
-    image: alpine:latest
-    container_name: certgen
-    volumes:
-      - ./misc:/certs
-    entrypoint: sh
-    command: -c "
-      apk add --no-cache openssl &&
-      mkdir -p /certs &&
-      openssl req -x509 -nodes -days 365 \
-      -newkey rsa:2048 \
-      -keyout /certs/privkey.pem \
-      -out /certs/fullchain.pem \
-      -subj '/CN=localhost'"
-
-  app:
-    build: .
-    environment:
-      - MONGODB_URL=mongodb://admin:password123@mongo:27017
-      - MONGODB_DATABASE=sockio_db
-      - WS_HOST=localhost
-      - WS_PORT=3000
-      - WS_MAX_PAYLOAD=10485760
-      - WS_IDLE_TIMEOUT=300
-      - WS_ROOM_NAME=room
-      - LOG_LEVEL=INFO
-      - PEM_KEY_PATH=../misc/privkey.pem
-      - PEM_CHAIN_PATH=../misc/fullchain.pem
-    ports:
-      - "443:3000"
-    depends_on:
-      certgen:
-        condition: service_completed_successfully
-      mongo:
-        condition: service_healthy
-    volumes:
-      - ./sockio/:/app/sockio/
-      - ./misc:/misc:ro
-    networks:
-      - sockio_network
-    command: [ "uv", "run", "python", "-m", "sockio.main" ]
-
   mongo:
     image: mongo:7.0
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password123
-      - MONGO_INITDB_DATABASE=sockio_db
     volumes:
       - mongo_data:/data/db
-      - mongo_config:/data/configdb
     networks:
       - sockio_network
     restart: unless-stopped
+    ports:
+      - "27017:27017"
     healthcheck:
       test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
       interval: 10s
@@ -68,6 +21,4 @@ networks:
 
 volumes:
   mongo_data:
-    driver: local
-  mongo_config:
     driver: local

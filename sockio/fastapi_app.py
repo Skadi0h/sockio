@@ -54,21 +54,13 @@ app.add_middleware(
 )
 
 
-def _extract_token(
-    authorization: str | None = Header(None),
-    session_token: str | None = Header(None, alias="X-Session-Token"),
-) -> str:
-    if authorization and authorization.startswith("Bearer "):
-        return authorization[7:]
-    if session_token:
-        return session_token
-    raise HTTPException(status_code=401, detail="Session token required")
 
-
-async def get_current_user(token: str = Depends(_extract_token)) -> User:
-    user = await auth_manager.verify_session(token)
+async def get_current_user(
+    session_token: str | None = Header(alias="X-Session-Token", default=None),
+) -> User:
+    user = await auth_manager.verify_session(session_token)
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid session")
+        raise HTTPException(status_code=401, detail="Invalid session or token")
     return user
 
 
@@ -89,8 +81,12 @@ async def login(data: UserLoginRequest):
 
 
 @app.post("/api/auth/logout")
-async def logout(token: str = Depends(_extract_token)):
-    response = await auth_manager.logout_user(token)
+async def logout(
+    session_token: str | None = Header(alias="X-Session-Token", default=None),
+):
+    response = await auth_manager.logout_user(
+        session_token
+    )
     if not response.success:
         raise HTTPException(status_code=400, detail=response.message)
     return response.dict()
@@ -101,8 +97,8 @@ async def get_current(token_user: User = Depends(get_current_user)):
     return token_user.to_dict()
 
 
-@app.get("/api/users/{user_id}")
-async def get_user(user_id: str, token_user: User = Depends(get_current_user)):
+@app.get("/api/users/{user_id}", dependencies=[Depends(get_current_user)])
+async def get_user(user_id: str):
     user = await User.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

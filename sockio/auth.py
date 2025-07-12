@@ -53,7 +53,6 @@ class AuthResponse(BaseModel):
     success: bool
     message: str
     user: Optional[Dict[str, Any]] = None
-    token: Optional[str] = None
     session_token: Optional[str] = None
 
 
@@ -128,11 +127,7 @@ class AuthenticationManager:
                     success=False,
                     message="Invalid username or password"
                 )
-            
-            # Generate JWT token
-            jwt_token = self.generate_jwt_token(user)
-            
-            # Create session
+        
             session = await self.create_session(user, ip_address, user_agent)
             
             # Update user status and last seen
@@ -146,7 +141,6 @@ class AuthenticationManager:
                 success=True,
                 message="Login successful",
                 user=user.to_dict(),
-                token=jwt_token,
                 session_token=session.session_token
             )
             
@@ -171,13 +165,13 @@ class AuthenticationManager:
                 await session.save()
                 
                 # Update user status to offline
-                user = await User.get(session.user_id.id)
+                user = await User.get(session.user_id.ref.id)
                 if user:
                     user.status = UserStatus.OFFLINE
                     user.last_seen = datetime.now(timezone.utc)
                     await user.save()
                 
-                logger.info("User logged out successfully", user_id=str(session.user_id.id))
+                logger.info("User logged out successfully", user_id=str(session.user_id.ref.id))
             
             return AuthResponse(
                 success=True,
@@ -185,34 +179,11 @@ class AuthenticationManager:
             )
             
         except Exception as e:
-            logger.error("User logout failed", error=str(e))
+            logger.error("User logout failed", error=e)
             return AuthResponse(
                 success=False,
                 message="Logout failed"
             )
-    
-    def generate_jwt_token(self, user: User) -> str:
-        """Generate JWT token for user."""
-        payload = {
-            'user_id': str(user.id),
-            'username': user.username,
-            'exp': datetime.now(timezone.utc) + self.token_expiration,
-            'iat': datetime.now(timezone.utc)
-        }
-        
-        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
-    
-    def verify_jwt_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """Verify and decode JWT token."""
-        try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
-            return payload
-        except jwt.ExpiredSignatureError:
-            logger.warning("JWT token expired")
-            return None
-        except jwt.InvalidTokenError:
-            logger.warning("Invalid JWT token")
-            return None
     
     async def create_session(self, user: User, ip_address: str = None, user_agent: str = None) -> UserSession:
         """Create a new user session."""
@@ -254,14 +225,6 @@ class AuthenticationManager:
     
     async def authenticate_websocket(self, token: str) -> Optional[User]:
         """Authenticate WebSocket connection using token."""
-        # Try JWT token first
-        jwt_payload = self.verify_jwt_token(token)
-        if jwt_payload:
-            user = await User.get(jwt_payload['user_id'])
-            if user:
-                return user
-        
-        # Try session token
         user = await self.verify_session(token)
         if user:
             return user

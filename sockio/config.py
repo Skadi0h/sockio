@@ -24,7 +24,7 @@ class Config(BaseSettings):
     
     # MongoDB settings
     mongodb_url: str = Field(default="mongodb://localhost:27017", env="MONGODB_URL")
-    mongodb_database: str = Field(default="chat_app", env="MONGODB_DATABASE")
+    mongodb_database: str = Field(default="sockio_db", env="MONGODB_DATABASE")
     
     # Authentication settings
     jwt_secret_key: str = Field(default="your-secret-key-change-in-production", env="JWT_SECRET_KEY")
@@ -49,7 +49,7 @@ class Config(BaseSettings):
     
     # Logging settings
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_format: str = Field(default="json", env="LOG_FORMAT")  # json or text
+    log_format: str = Field(default="text", env="LOG_FORMAT")  # json or text
     
     # CORS settings
     cors_origins: List[str] = Field(default=["*"], env="CORS_ORIGINS")
@@ -64,8 +64,8 @@ class Config(BaseSettings):
     # Message settings
     max_message_length: int = Field(default=4000, env="MAX_MESSAGE_LENGTH")
     message_history_limit: int = Field(default=100, env="MESSAGE_HISTORY_LIMIT")
-    pem_key_path: str = Field(env='PEM_KEY_PATH')
-    pem_chain_path: str = Field(env='PEM_CHAIN_PATH')
+    pem_key_path: str = Field(env='PEM_KEY_PATH', default='')
+    pem_chain_path: str = Field(env='PEM_CHAIN_PATH', default='')
     
     @property
     def ws_url(self) -> str:

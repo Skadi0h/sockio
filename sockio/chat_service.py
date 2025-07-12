@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
 from typing import Optional, Any
 from sockio.models import (
-    User, 
-    Conversation, 
-    ConversationParticipant, 
+    User,
+    Conversation,
+    ConversationParticipant,
     Message,
-    ConversationType, 
-    MessageType, 
+    ConversationType,
+    MessageType,
     ParticipantRole
 )
 from sockio.log import make_logger, ChatLogger
@@ -16,8 +16,6 @@ chat_logger = ChatLogger()
 
 
 class ChatService:
-    def __init__(self):
-        pass
     
     async def create_direct_conversation(self, user1_id: str, user2_id: str) -> Optional[Conversation]:
         try:
@@ -56,7 +54,7 @@ class ChatService:
             return conversation
         
         except Exception as e:
-            logger.error("Error creating direct conversation", error=str(e))
+            logger.error("Error creating direct conversation", exc_info=e)
             return None
     
     async def create_group_conversation(self, creator_id: str, name: str, description: str = None,
@@ -111,9 +109,9 @@ class ChatService:
                 return None
             
             participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == sender_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == sender_id,
+                ConversationParticipant.left_at== None
             )
             
             if not participant:
@@ -143,7 +141,7 @@ class ChatService:
     async def edit_message(self, user_id: str, message_id: str, new_content: str) -> bool:
         try:
             message = await Message.get(message_id)
-            if not message or str(message.sender_id.id) != user_id:
+            if not message or str(message.sender_id) != user_id:
                 return False
             
             message.content = new_content
@@ -161,7 +159,7 @@ class ChatService:
     async def delete_message(self, user_id: str, message_id: str) -> bool:
         try:
             message = await Message.get(message_id)
-            if not message or str(message.sender_id.id) != user_id:
+            if not message or str(message.sender_id) != user_id:
                 return False
             
             message.deleted_at = datetime.now(timezone.utc)
@@ -178,8 +176,8 @@ class ChatService:
     async def get_conversation_messages(self, conversation_id: str, limit: int = 50, offset: int = 0) -> list[Message]:
         try:
             messages = await Message.find(
-                Message.conversation_id.id == conversation_id,
-                Message.deleted_at.is_(None)
+                Message.conversation_id == conversation_id,
+                Message.deleted_at == None
             ).sort(-Message.created_at).skip(offset).limit(limit).to_list()
             
             return list(reversed(messages))
@@ -189,60 +187,61 @@ class ChatService:
             return []
     
     async def get_user_conversations(self, user_id: str) -> list[dict[str, Any]]:
-        try:
-            participants = await ConversationParticipant.find(
-                ConversationParticipant.user_id.id == user_id,
-                ConversationParticipant.left_at.is_(None)
-            ).to_list()
-            
-            conversations = []
-            for participant in participants:
-                conversation = await Conversation.get(participant.conversation_id.id)
-                if conversation and conversation.is_active:
-                    conv_data = conversation.to_dict()
-                    
-                    last_message = await Message.find(
-                        Message.conversation_id.id == str(conversation.id),
-                        Message.deleted_at.is_(None)
-                    ).sort(-Message.created_at).limit(1).to_list()
-                    
-                    if last_message:
-                        conv_data['last_message'] = last_message[0].to_dict()
-                    
-                    if conversation.type == ConversationType.DIRECT:
-                        other_participant = await ConversationParticipant.find_one(
-                            ConversationParticipant.conversation_id.id == str(conversation.id),
-                            ConversationParticipant.user_id.id != user_id,
-                            ConversationParticipant.left_at.is_(None)
-                        )
-                        if other_participant:
-                            other_user = await User.get(other_participant.user_id.id)
-                            if other_user:
-                                conv_data['other_user'] = other_user.to_dict()
-                    
-                    conversations.append(conv_data)
-            
-            return sorted(conversations, key=lambda x: x.get('updated_at', ''), reverse=True)
+        # try:
+        participants = await ConversationParticipant.find(
+            ConversationParticipant.user_id.id == user_id,
+            ConversationParticipant.left_at == None
+        ).to_list()
+        logger.info('PARTICIPANTS', participants=participants)
         
-        except Exception as e:
-            logger.error("Error getting user conversations", error=str(e))
-            return []
+        conversations = []
+        for participant in participants:
+            conversation = await Conversation.get(participant.conversation_id.ref.id)
+            if conversation and conversation.is_active:
+                conv_data = conversation.to_dict()
+
+                last_message = await Message.find(
+                    Message.conversation_id == str(conversation.id),
+                    Message.deleted_at == None
+                ).sort(-Message.created_at).limit(1).to_list()
+
+                if last_message:
+                    conv_data['last_message'] = last_message[0].to_dict()
+
+                if conversation.type == ConversationType.DIRECT:
+                    other_participant = await ConversationParticipant.find_one(
+                        ConversationParticipant.conversation_id == str(conversation.id),
+                        ConversationParticipant.user_id != user_id,
+                        ConversationParticipant.left_at == None
+                    )
+                    if other_participant:
+                        other_user = await User.get(other_participant.user_id.ref.id)
+                        if other_user:
+                            conv_data['other_user'] = other_user.to_dict()
+            
+                conversations.append(conv_data)
+        
+        return sorted(conversations, key=lambda x: x.get('updated_at', ''), reverse=True)
+        
+        # except Exception as e:
+        #     logger.error("Error getting user conversations", error=str(e))
+        #     return []
     
     async def add_participant_to_group(self, admin_user_id: str, conversation_id: str, user_id: str) -> bool:
         try:
             admin_participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == admin_user_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == admin_user_id,
+                ConversationParticipant.left_at == None
             )
             
             if not admin_participant or admin_participant.role not in [ParticipantRole.ADMIN, ParticipantRole.OWNER]:
                 return False
             
             existing_participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == user_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == user_id,
+                ConversationParticipant.left_at == None
             )
             
             if existing_participant:
@@ -272,18 +271,18 @@ class ChatService:
     async def remove_participant_from_group(self, admin_user_id: str, conversation_id: str, user_id: str) -> bool:
         try:
             admin_participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == admin_user_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == admin_user_id,
+                ConversationParticipant.left_at == None
             )
             
             if not admin_participant or admin_participant.role not in [ParticipantRole.ADMIN, ParticipantRole.OWNER]:
                 return False
             
             participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == user_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == user_id,
+                ConversationParticipant.left_at == None
             )
             
             if not participant:
@@ -303,9 +302,9 @@ class ChatService:
     async def leave_conversation(self, user_id: str, conversation_id: str) -> bool:
         try:
             participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == user_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == user_id,
+                ConversationParticipant.left_at == None
             )
             
             if not participant:
@@ -325,9 +324,9 @@ class ChatService:
     async def mark_messages_as_read(self, user_id: str, conversation_id: str, message_id: str) -> bool:
         try:
             participant = await ConversationParticipant.find_one(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.user_id.id == user_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.user_id == user_id,
+                ConversationParticipant.left_at == None
             )
             
             if not participant:
@@ -345,13 +344,13 @@ class ChatService:
     async def get_conversation_participants(self, conversation_id: str) -> list[dict[str, Any]]:
         try:
             participants = await ConversationParticipant.find(
-                ConversationParticipant.conversation_id.id == conversation_id,
-                ConversationParticipant.left_at.is_(None)
+                ConversationParticipant.conversation_id == conversation_id,
+                ConversationParticipant.left_at == None
             ).to_list()
             
             result = []
             for participant in participants:
-                user = await User.get(participant.user_id.id)
+                user = await User.get(participant.user_id)
                 if user:
                     participant_data = participant.to_dict()
                     participant_data['user'] = user.to_dict()
@@ -365,19 +364,19 @@ class ChatService:
     
     async def _find_direct_conversation(self, user1_id: str, user2_id: str) -> Optional[Conversation]:
         participants1 = await ConversationParticipant.find(
-            ConversationParticipant.user_id.id == user1_id,
-            ConversationParticipant.left_at.is_(None)
+            ConversationParticipant.user_id == user1_id,
+            ConversationParticipant.left_at == None
         ).to_list()
         
         participants2 = await ConversationParticipant.find(
-            ConversationParticipant.user_id.id == user2_id,
-            ConversationParticipant.left_at.is_(None)
+            ConversationParticipant.user_id == user2_id,
+            ConversationParticipant.left_at == None
         ).to_list()
         
         for p1 in participants1:
             for p2 in participants2:
-                if p1.conversation_id.id == p2.conversation_id.id:
-                    conv = await Conversation.get(p1.conversation_id.id)
+                if p1.conversation_id == p2.conversation_id:
+                    conv = await Conversation.get(p1.conversation_id)
                     if conv and conv.type == ConversationType.DIRECT:
                         return conv
         

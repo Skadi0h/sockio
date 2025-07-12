@@ -71,10 +71,10 @@ def create_server() -> ASGI:
 
     server = ASGI(
         fastapi_app,
-        options=AppOptions(
-            key_file_name=config.pem_key_path,
-            cert_file_name=config.pem_chain_path,
-        ),
+        # options=AppOptions(
+        #     key_file_name=config.pem_key_path,
+        #     cert_file_name=config.pem_chain_path,
+        # ),
         websocket=True,
         websocket_options={
             "compression": CompressOptions.SHARED_COMPRESSOR,
