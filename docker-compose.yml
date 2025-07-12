@@ -13,11 +13,10 @@ services:
     build: .
     container_name: socketify_app
     depends_on:
-      mongo:
+      postgres:
         condition: service_healthy
     environment:
-      - MONGODB_URL=mongodb://admin:password123@mongo:27017
-      - MONGODB_DATABASE=sockio_db
+      - POSTGRES_URL=postgresql+asyncpg://sockuser:sockpass@postgres/sockio
       - WS_HOST=orro.chat
       - WS_PORT=3000
       - WS_MAX_PAYLOAD=10485760
@@ -36,21 +35,20 @@ services:
       - sockio_network
     command: [ "uv", "run", "python", "-m", "sockio.main" ]
 
-  mongo:
-    image: mongo:7.0
-    container_name: sockio_mongo
+  postgres:
+    image: postgres:16
+    container_name: sockio_postgres
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password123
-      - MONGO_INITDB_DATABASE=sockio_db
+      - POSTGRES_DB=sockio
+      - POSTGRES_USER=sockuser
+      - POSTGRES_PASSWORD=sockpass
     volumes:
-      - mongo_data:/data/db
-      - mongo_config:/data/configdb
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - sockio_network
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "pg_isready", "-U", "sockuser" ]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -61,9 +59,7 @@ networks:
     driver: bridge
 
 volumes:
-  mongo_data:
-    driver: local
-  mongo_config:
+  postgres_data:
     driver: local
   cert_volume:
     driver: local
